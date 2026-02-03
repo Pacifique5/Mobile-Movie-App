@@ -1,18 +1,21 @@
 {
   "expo": {
-    "name": "Movie App",
-    "slug": "movie-app",
+    "name": "CinemaMax",
+    "slug": "cinemamax-app",
     "version": "1.0.0",
     "orientation": "portrait",
-    "userInterfaceStyle": "automatic",
-    "newArchEnabled": false,
+    "userInterfaceStyle": "dark",
+    "scheme": "cinemamax",
+    "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.cinemamax.app"
     },
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#000000"
-      }
+      },
+      "package": "com.cinemamax.app"
     },
     "web": {
       "bundler": "metro",

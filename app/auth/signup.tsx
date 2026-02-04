@@ -3,9 +3,11 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
+import { useAuth } from "../../contexts/AuthContext";
 
 export default function SignupScreen() {
   const router = useRouter();
+  const { signup } = useAuth();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -14,8 +16,9 @@ export default function SignupScreen() {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSignup = () => {
+  const handleSignup = async () => {
     const { name, email, password, confirmPassword } = formData;
     
     if (!name || !email || !password || !confirmPassword) {
@@ -32,10 +35,42 @@ export default function SignupScreen() {
       Alert.alert('Error', 'Password must be at least 6 characters');
       return;
     }
+
+    if (name.trim().length < 2) {
+      Alert.alert('Error', 'Please enter a valid name');
+      return;
+    }
     
-    Alert.alert('Success', 'Account created successfully!', [
-      { text: 'OK', onPress: () => router.replace('/(tabs)') }
-    ]);
+    setIsLoading(true);
+    
+    try {
+      // Create new user data
+      const newUserData = {
+        name: name.trim(),
+        email: email.toLowerCase().trim(),
+        avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(name.trim())}&background=FF6B6B&color=fff&size=150`,
+        memberSince: new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
+        watchedMovies: 0,
+        favorites: [],
+        downloads: [],
+        watchHistory: [],
+        darkMode: true
+      };
+      
+      const success = await signup(newUserData);
+      
+      if (success) {
+        Alert.alert('Success', `Welcome to CinemaMax, ${name.split(' ')[0]}!`, [
+          { text: 'OK', onPress: () => router.replace('/(tabs)') }
+        ]);
+      } else {
+        Alert.alert('Error', 'Failed to create account. Please try again.');
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Something went wrong. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const updateFormData = (field: string, value: string) => {
@@ -125,8 +160,14 @@ export default function SignupScreen() {
             </Text>
           </View>
 
-          <TouchableOpacity style={styles.signupButton} onPress={handleSignup}>
-            <Text style={styles.signupButtonText}>Create Account</Text>
+          <TouchableOpacity 
+            style={[styles.signupButton, isLoading && styles.signupButtonDisabled]} 
+            onPress={handleSignup}
+            disabled={isLoading}
+          >
+            <Text style={styles.signupButtonText}>
+              {isLoading ? 'Creating Account...' : 'Create Account'}
+            </Text>
           </TouchableOpacity>
 
           <View style={styles.divider}>
@@ -213,6 +254,9 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: 'center',
     marginBottom: 24,
+  },
+  signupButtonDisabled: {
+    backgroundColor: '#666666',
   },
   signupButtonText: {
     color: '#FFFFFF',

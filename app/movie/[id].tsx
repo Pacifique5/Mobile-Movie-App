@@ -2,7 +2,9 @@ import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, Dimensions
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useAuth } from "../../contexts/AuthContext";
+import { OptimizedImage } from "../../components/OptimizedImage";
 
 const { width, height } = Dimensions.get('window');
 
@@ -28,13 +30,42 @@ const MOVIE_DETAILS = {
 export default function MovieDetailScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams();
-  const [isFavorite, setIsFavorite] = useState(false);
+  const { user, isGuest, addToFavorites, removeFromFavorites } = useAuth();
   const [isWatchlisted, setIsWatchlisted] = useState(false);
   
   // Get movie details (fallback to first movie if not found)
   const movieId = Array.isArray(id) ? id[0] : id;
   const numericId = parseInt(movieId || '1', 10);
   const movie = MOVIE_DETAILS[numericId as keyof typeof MOVIE_DETAILS] || MOVIE_DETAILS[1];
+  
+  // Check if movie is in favorites
+  const isFavorite = user?.favorites?.includes(movieId || '1') || false;
+
+  useEffect(() => {
+    // Any initialization logic here
+  }, []);
+
+  const handleToggleFavorite = async () => {
+    if (isGuest) {
+      Alert.alert(
+        "Sign In Required",
+        "Please sign in to add movies to your favorites",
+        [
+          { text: "Cancel", style: "cancel" },
+          { text: "Sign In", onPress: () => router.push('/auth/login') }
+        ]
+      );
+      return;
+    }
+
+    if (isFavorite) {
+      await removeFromFavorites(movieId || '1');
+      Alert.alert("Removed", "Movie removed from favorites");
+    } else {
+      await addToFavorites(movieId || '1');
+      Alert.alert("Added", "Movie added to favorites");
+    }
+  };
 
   const handleWatchTrailer = () => {
     Alert.alert(
@@ -67,7 +98,7 @@ export default function MovieDetailScreen() {
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Hero Section */}
         <View style={styles.heroContainer}>
-          <Image source={{ uri: movie.backdrop }} style={styles.backdropImage} />
+          <OptimizedImage source={{ uri: movie.backdrop }} style={styles.backdropImage} />
           <LinearGradient
             colors={['transparent', 'rgba(15,15,35,0.8)', 'rgba(15,15,35,1)']}
             style={styles.heroGradient}
@@ -82,7 +113,7 @@ export default function MovieDetailScreen() {
                   <Ionicons name="share-outline" size={24} color="#FFFFFF" />
                 </TouchableOpacity>
                 <TouchableOpacity 
-                  onPress={() => setIsFavorite(!isFavorite)} 
+                  onPress={handleToggleFavorite} 
                   style={styles.headerButton}
                 >
                   <Ionicons 

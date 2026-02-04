@@ -1,7 +1,6 @@
 import { Tabs } from "expo-router";
 import { View, Text } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
 
 function TabIcon({ focused, name, title }: { focused: boolean; name: any; title: string }) {
   return (

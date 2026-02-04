@@ -3,26 +3,36 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
+import { useAuth } from "../../contexts/AuthContext";
 
 export default function LoginScreen() {
   const router = useRouter();
+  const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     if (!email || !password) {
       Alert.alert('Error', 'Please fill in all fields');
       return;
     }
     
-    // Simple validation for demo
-    if (email === 'demo@cinemamax.com' && password === 'password') {
-      Alert.alert('Success', 'Welcome back!', [
-        { text: 'OK', onPress: () => router.replace('/(tabs)') }
-      ]);
-    } else {
-      Alert.alert('Error', 'Invalid credentials. Try demo@cinemamax.com / password');
+    setIsLoading(true);
+    try {
+      const success = await login(email, password);
+      if (success) {
+        Alert.alert('Success', 'Welcome back!', [
+          { text: 'OK', onPress: () => router.replace('/(tabs)') }
+        ]);
+      } else {
+        Alert.alert('Error', 'Invalid email or password. Please try again.');
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Something went wrong. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -73,8 +83,14 @@ export default function LoginScreen() {
           <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
-          <Text style={styles.loginButtonText}>Sign In</Text>
+        <TouchableOpacity 
+          style={[styles.loginButton, isLoading && styles.loginButtonDisabled]} 
+          onPress={handleLogin}
+          disabled={isLoading}
+        >
+          <Text style={styles.loginButtonText}>
+            {isLoading ? 'Signing In...' : 'Sign In'}
+          </Text>
         </TouchableOpacity>
 
         <View style={styles.divider}>
@@ -93,13 +109,6 @@ export default function LoginScreen() {
           <TouchableOpacity onPress={() => router.push('/auth/signup')}>
             <Text style={styles.signupLink}>Sign Up</Text>
           </TouchableOpacity>
-        </View>
-
-        {/* Demo credentials */}
-        <View style={styles.demoContainer}>
-          <Text style={styles.demoTitle}>Demo Credentials:</Text>
-          <Text style={styles.demoText}>Email: demo@cinemamax.com</Text>
-          <Text style={styles.demoText}>Password: password</Text>
         </View>
       </View>
     </LinearGradient>
@@ -163,6 +172,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 24,
   },
+  loginButtonDisabled: {
+    backgroundColor: '#666666',
+  },
   loginButtonText: {
     color: '#FFFFFF',
     fontSize: 18,
@@ -210,22 +222,5 @@ const styles = StyleSheet.create({
     color: '#FF6B6B',
     fontSize: 16,
     fontWeight: 'bold',
-  },
-  demoContainer: {
-    backgroundColor: 'rgba(255,107,107,0.1)',
-    padding: 16,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#FF6B6B',
-  },
-  demoTitle: {
-    color: '#FF6B6B',
-    fontSize: 14,
-    fontWeight: 'bold',
-    marginBottom: 8,
-  },
-  demoText: {
-    color: '#CCCCCC',
-    fontSize: 12,
   },
 });

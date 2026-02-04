@@ -3,6 +3,8 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
+import { useAuth } from "../../contexts/AuthContext";
+import { OptimizedImage } from "../../components/OptimizedImage";
 
 const { width } = Dimensions.get('window');
 
@@ -82,7 +84,7 @@ const FeaturedMovieCard = ({ movie, index }: { movie: any, index: number }) => {
       style={[styles.featuredCard, { marginLeft: index === 0 ? 20 : 0 }]}
       onPress={() => router.push(`/movie/${movie.id}`)}
     >
-      <Image source={{ uri: movie.backdrop }} style={styles.featuredImage} />
+      <OptimizedImage source={{ uri: movie.backdrop }} style={styles.featuredImage} />
       <LinearGradient
         colors={['transparent', 'rgba(0,0,0,0.8)']}
         style={styles.featuredGradient}
@@ -117,7 +119,7 @@ const TrendingMovieCard = ({ movie }: { movie: any }) => {
       style={styles.trendingCard}
       onPress={() => router.push(`/movie/${movie.id}`)}
     >
-      <Image source={{ uri: movie.poster }} style={styles.trendingImage} />
+      <OptimizedImage source={{ uri: movie.poster }} style={styles.trendingImage} />
       <View style={styles.trendingContent}>
         <Text style={styles.trendingTitle} numberOfLines={2}>{movie.title}</Text>
         <Text style={styles.trendingYear}>{movie.year}</Text>
@@ -132,20 +134,46 @@ const TrendingMovieCard = ({ movie }: { movie: any }) => {
 
 export default function HomeScreen() {
   const router = useRouter();
+  const { user, isGuest } = useAuth();
   const [activeCategory, setActiveCategory] = useState('All');
   
   const categories = ['All', 'Action', 'Comedy', 'Drama', 'Horror', 'Sci-Fi'];
+
+  const getGreeting = () => {
+    if (isGuest) {
+      return "Welcome, Guest! 👋";
+    }
+    if (user) {
+      const firstName = user.name.split(' ')[0]; // Get first name only
+      return `Hello, ${firstName}! 👋`;
+    }
+    return "Hello, Movie Lover! 👋";
+  };
+
+  const getSubtitle = () => {
+    if (isGuest) {
+      return "Discover amazing movies";
+    }
+    return "What do you want to watch today?";
+  };
 
   return (
     <View style={styles.container}>
       <LinearGradient colors={['#1a1a2e', '#16213e']} style={styles.header}>
         <View style={styles.headerContent}>
           <View>
-            <Text style={styles.greeting}>Hello, Movie Lover! 👋</Text>
-            <Text style={styles.subtitle}>What do you want to watch today?</Text>
+            <Text style={styles.greeting}>{getGreeting()}</Text>
+            <Text style={styles.subtitle}>{getSubtitle()}</Text>
           </View>
-          <TouchableOpacity style={styles.profileButton}>
-            <Ionicons name="person-circle" size={32} color="#FF6B6B" />
+          <TouchableOpacity 
+            style={styles.profileButton}
+            onPress={() => router.push('/(tabs)/profile')}
+          >
+            {user?.avatar ? (
+              <Image source={{ uri: user.avatar }} style={styles.profileImage} />
+            ) : (
+              <Ionicons name="person-circle" size={32} color="#FF6B6B" />
+            )}
           </TouchableOpacity>
         </View>
         
@@ -270,6 +298,13 @@ const styles = StyleSheet.create({
   profileButton: {
     padding: 4,
   },
+  profileImage: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    borderWidth: 2,
+    borderColor: '#FF6B6B',
+  },
   searchButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -315,8 +350,13 @@ const styles = StyleSheet.create({
     width: width * 0.8,
     height: 200,
     marginRight: 16,
-    borderRadius: 12,
+    borderRadius: 16,
     overflow: 'hidden',
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
   },
   featuredImage: {
     width: '100%',
@@ -412,8 +452,13 @@ const styles = StyleSheet.create({
   trendingImage: {
     width: '100%',
     height: 160,
-    borderRadius: 8,
+    borderRadius: 12,
     marginBottom: 8,
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
   },
   trendingContent: {
     gap: 4,

@@ -2,11 +2,18 @@ import { View, Text, StyleSheet, TouchableOpacity, ImageBackground, Dimensions }
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import { useAuth } from "../contexts/AuthContext";
 
 const { width, height } = Dimensions.get('window');
 
 export default function LandingScreen() {
   const router = useRouter();
+  const { continueAsGuest } = useAuth();
+
+  const handleContinueAsGuest = async () => {
+    await continueAsGuest();
+    router.replace('/(tabs)');
+  };
 
   return (
     <ImageBackground
@@ -29,15 +36,21 @@ export default function LandingScreen() {
           {/* Features */}
           <View style={styles.featuresContainer}>
             <View style={styles.feature}>
-              <Ionicons name="play-circle" size={24} color="#FF6B6B" />
+              <View style={styles.featureIcon}>
+                <Ionicons name="play-circle" size={28} color="#FF6B6B" />
+              </View>
               <Text style={styles.featureText}>Watch Trailers</Text>
             </View>
             <View style={styles.feature}>
-              <Ionicons name="download" size={24} color="#FF6B6B" />
-              <Text style={styles.featureText}>Download Movies</Text>
+              <View style={styles.featureIcon}>
+                <Ionicons name="search" size={28} color="#FF6B6B" />
+              </View>
+              <Text style={styles.featureText}>Discover Movies</Text>
             </View>
             <View style={styles.feature}>
-              <Ionicons name="star" size={24} color="#FF6B6B" />
+              <View style={styles.featureIcon}>
+                <Ionicons name="star" size={28} color="#FF6B6B" />
+              </View>
               <Text style={styles.featureText}>Rate & Review</Text>
             </View>
           </View>
@@ -62,7 +75,7 @@ export default function LandingScreen() {
           {/* Skip option */}
           <TouchableOpacity 
             style={styles.skipButton}
-            onPress={() => router.push('/(tabs)')}
+            onPress={handleContinueAsGuest}
           >
             <Text style={styles.skipText}>Continue as Guest</Text>
           </TouchableOpacity>
@@ -116,7 +129,16 @@ const styles = StyleSheet.create({
   feature: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 16,
+    paddingVertical: 8,
+  },
+  featureIcon: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: 'rgba(255,107,107,0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   featureText: {
     fontSize: 18,

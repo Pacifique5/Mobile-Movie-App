@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { supabase, Profile, isDemoMode } from '../lib/supabase';
+import { supabase, Profile, isConfigured } from '../lib/supabase';
 import { Session, User } from '@supabase/supabase-js';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -38,8 +38,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Demo mode - load from AsyncStorage
-    if (isDemoMode) {
+    // If Supabase is not configured, use demo mode
+    if (!isConfigured) {
       loadDemoData();
       return;
     }
@@ -111,8 +111,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signUp = async (email: string, password: string, name: string) => {
-    // Demo mode fallback
-    if (isDemoMode) {
+    // Demo mode fallback if Supabase not configured
+    if (!isConfigured) {
       const demoProfile: Profile = {
         id: Date.now().toString(),
         email: email,
@@ -171,8 +171,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signIn = async (email: string, password: string) => {
-    // Demo mode fallback
-    if (isDemoMode) {
+    // Demo mode fallback if Supabase not configured
+    if (!isConfigured) {
       if (email === 'demo@cinemamax.com' && password === 'password') {
         const demoProfile: Profile = {
           id: '1',
@@ -214,7 +214,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       setIsGuest(false);
       
-      if (isDemoMode) {
+      if (!isConfigured) {
         setUser(null);
         setProfile(null);
         await AsyncStorage.removeItem('demoProfile');
@@ -268,7 +268,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     // Demo mode - use AsyncStorage
-    if (isDemoMode) {
+    if (!isConfigured) {
       try {
         const favorites = await AsyncStorage.getItem('demoFavorites');
         const currentFavorites = favorites ? JSON.parse(favorites) : [];
@@ -306,7 +306,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     // Demo mode - use AsyncStorage
-    if (isDemoMode) {
+    if (!isConfigured) {
       try {
         const favorites = await AsyncStorage.getItem('demoFavorites');
         const currentFavorites = favorites ? JSON.parse(favorites) : [];
@@ -341,7 +341,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     // Demo mode - use AsyncStorage
-    if (isDemoMode) {
+    if (!isConfigured) {
       try {
         const favorites = await AsyncStorage.getItem('demoFavorites');
         return favorites ? JSON.parse(favorites) : [];

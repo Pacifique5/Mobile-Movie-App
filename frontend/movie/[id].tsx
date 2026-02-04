@@ -3,8 +3,8 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useState, useEffect } from "react";
-import { useAuth } from "../../contexts/AuthContext";
-import { OptimizedImage } from "../../components/OptimizedImage";
+import { useAuth } from "../contexts/AuthContext";
+import { OptimizedImage } from "../components/OptimizedImage";
 
 const { width, height } = Dimensions.get('window');
 
@@ -84,7 +84,10 @@ export default function MovieDetailScreen() {
       "Opening trailer player...",
       [
         { text: "Cancel", style: "cancel" },
-        { text: "Watch", onPress: () => console.log("Playing trailer") }
+        { text: "Watch", onPress: () => {
+          // TODO: Implement trailer playback
+          Alert.alert("Coming Soon", "Trailer playback will be implemented in a future update");
+        }}
       ]
     );
   };
@@ -95,7 +98,10 @@ export default function MovieDetailScreen() {
       `Download ${movie.title} in ${quality}?`,
       [
         { text: "Cancel", style: "cancel" },
-        { text: "Download", onPress: () => console.log(`Downloading ${quality}`) }
+        { text: "Download", onPress: () => {
+          // TODO: Implement movie download
+          Alert.alert("Coming Soon", `Movie download in ${quality} quality will be implemented in a future update`);
+        }}
       ]
     );
   };

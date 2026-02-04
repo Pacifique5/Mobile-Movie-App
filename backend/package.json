@@ -6,9 +6,14 @@
   "scripts": {
     "dev": "nodemon src/index.js",
     "start": "node src/index.js",
+    "build": "echo 'No build step required'",
+    "test": "echo 'No tests specified'",
     "db:generate": "supabase gen types typescript --project-id $PROJECT_ID --schema public > src/types/database.types.ts",
     "db:reset": "supabase db reset",
-    "db:migrate": "supabase migration up"
+    "db:migrate": "supabase migration up",
+    "deploy:railway": "railway deploy",
+    "deploy:vercel": "vercel --prod",
+    "deploy:heroku": "git push heroku main"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.39.0",

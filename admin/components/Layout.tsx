@@ -7,7 +7,7 @@ import {
   FilmIcon,
   ChartBarIcon,
   CogIcon,
-  ArrowRightOnRectangleIcon,
+  ArrowLeftOnRectangleIcon,
   Bars3Icon,
   XMarkIcon,
   UserCircleIcon,
@@ -204,7 +204,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                           }}
                           className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
                         >
-                          <ArrowRightOnRectangleIcon className="h-4 w-4 inline mr-2" />
+                          <ArrowLeftOnRectangleIcon className="h-4 w-4 inline mr-2" />
                           Logout
                         </button>
                       </div>

@@ -546,23 +546,26 @@ export default function Settings() {
         {/* Settings Navigation */}
         <div className="lg:col-span-1">
           <nav className="space-y-1">
-            {sections.map((section) => (
-              <button
-                key={section.id}
-                onClick={() => setActiveSection(section.id)}
-                className={`w-full text-left px-3 py-2 rounded-lg flex items-center space-x-3 transition-colors ${
-                  activeSection === section.id
-                    ? 'bg-blue-100 text-blue-700 border border-blue-200'
-                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-                }`}
-              >
-                <section.icon className="h-5 w-5" />
-                <div>
-                  <div className="text-sm font-medium">{section.title}</div>
-                  <div className="text-xs text-gray-500">{section.description}</div>
-                </div>
-              </button>
-            ))}
+            {sections.map((section) => {
+              const IconComponent = section.icon
+              return (
+                <button
+                  key={section.id}
+                  onClick={() => setActiveSection(section.id)}
+                  className={`w-full text-left px-3 py-2 rounded-lg flex items-center space-x-3 transition-colors ${
+                    activeSection === section.id
+                      ? 'bg-blue-100 text-blue-700 border border-blue-200'
+                      : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                  }`}
+                >
+                  <IconComponent className="h-5 w-5" />
+                  <div>
+                    <div className="text-sm font-medium">{section.title}</div>
+                    <div className="text-xs text-gray-500">{section.description}</div>
+                  </div>
+                </button>
+              )
+            })}
           </nav>
         </div>
 

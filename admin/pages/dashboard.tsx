@@ -6,10 +6,6 @@ import {
   StarIcon,
   ArrowTrendingUpIcon,
   EyeIcon,
-  CurrencyDollarIcon,
-  ChartBarIcon,
-  ClockIcon,
-  ExclamationTriangleIcon,
   PlayIcon
 } from '@heroicons/react/24/outline'
 import { useAdminAuth } from '@/contexts/AdminAuthContext'
@@ -74,7 +70,7 @@ function StatCard({ title, value, change, icon: Icon, color, trend, bgColor = 'b
 }
 
 export default function Dashboard() {
-  const { user } = useAdminAuth()
+  const { user: _user } = useAdminAuth()
   const [stats, setStats] = useState({
     total_users: 0,
     active_users: 0,
@@ -91,7 +87,6 @@ export default function Dashboard() {
   })
   
   const [activity, setActivity] = useState<RecentActivity[]>([])
-  const [alerts, setAlerts] = useState<SystemAlert[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -282,8 +277,8 @@ export default function Dashboard() {
           
           {/* User growth chart */}
           <div className="h-64 flex items-end justify-between space-x-2">
-            {[1200, 1800, 1400, 2200, 1900, 2500, 2100, 2800].map((value, index) => (
-              <div key={index} className="flex-1 bg-indigo-100 rounded-t-sm relative">
+            {[1200, 1800, 1400, 2200, 1900, 2500, 2100, 2800].map((value) => (
+              <div key={value} className="flex-1 bg-indigo-100 rounded-t-sm relative">
                 <div 
                   className="bg-indigo-500 rounded-t-sm transition-all duration-1000 ease-out"
                   style={{ height: `${(value / 3000) * 100}%` }}
@@ -424,7 +419,7 @@ export default function Dashboard() {
           <span className="text-sm text-gray-500">Live updates</span>
         </div>
         <div className="space-y-4">
-          {activity.map((item, index) => (
+          {activity.map((item) => (
             <div key={item.id} className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg">
               <div className={`p-2 rounded-full ${
                 item.activity_type === 'signup' ? 'bg-green-100' :

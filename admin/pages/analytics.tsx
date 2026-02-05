@@ -171,40 +171,43 @@ export default function Analytics() {
 
       {/* Metrics Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {metrics.map((metric, index) => (
-          <div key={index} className="card">
-            <div className="card-body">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <div className={`p-3 rounded-md ${metric.color}`}>
-                    <metric.icon className="h-6 w-6 text-white" />
+        {metrics.map((metric, index) => {
+          const IconComponent = metric.icon
+          return (
+            <div key={index} className="card">
+              <div className="card-body">
+                <div className="flex items-center">
+                  <div className="flex-shrink-0">
+                    <div className={`p-3 rounded-md ${metric.color}`}>
+                      <IconComponent className="h-6 w-6 text-white" />
+                    </div>
                   </div>
-                </div>
-                <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">{metric.title}</dt>
-                    <dd className="flex items-baseline">
-                      <div className="text-2xl font-semibold text-gray-900">{metric.value}</div>
-                      <div className={`ml-2 flex items-baseline text-sm font-semibold ${
-                        metric.changeType === 'increase' ? 'text-green-600' : 'text-red-600'
-                      }`}>
-                        {metric.changeType === 'increase' ? (
-                          <TrendingUpIcon className="h-4 w-4 flex-shrink-0 self-center" />
-                        ) : (
-                          <TrendingDownIcon className="h-4 w-4 flex-shrink-0 self-center" />
-                        )}
-                        <span className="sr-only">
-                          {metric.changeType === 'increase' ? 'Increased' : 'Decreased'} by
-                        </span>
-                        {metric.change}
-                      </div>
-                    </dd>
-                  </dl>
+                  <div className="ml-5 w-0 flex-1">
+                    <dl>
+                      <dt className="text-sm font-medium text-gray-500 truncate">{metric.title}</dt>
+                      <dd className="flex items-baseline">
+                        <div className="text-2xl font-semibold text-gray-900">{metric.value}</div>
+                        <div className={`ml-2 flex items-baseline text-sm font-semibold ${
+                          metric.changeType === 'increase' ? 'text-green-600' : 'text-red-600'
+                        }`}>
+                          {metric.changeType === 'increase' ? (
+                            <TrendingUpIcon className="h-4 w-4 flex-shrink-0 self-center" />
+                          ) : (
+                            <TrendingDownIcon className="h-4 w-4 flex-shrink-0 self-center" />
+                          )}
+                          <span className="sr-only">
+                            {metric.changeType === 'increase' ? 'Increased' : 'Decreased'} by
+                          </span>
+                          {metric.change}
+                        </div>
+                      </dd>
+                    </dl>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        ))}
+          )
+        })}
       </div>
 
       {/* Charts Row */}

@@ -6,7 +6,9 @@ interface AdminUser {
   id: string
   username: string
   email: string
-  role: 'admin' | 'super_admin'
+  role: 'admin' | 'moderator'
+  first_name: string
+  last_name: string
   permissions: string[]
   avatar?: string
   lastLogin?: string
@@ -30,26 +32,25 @@ export const useAdminAuth = () => {
   return context
 }
 
-const DEMO_ADMIN_USERS = [
-  {
-    id: '1',
-    username: 'admin',
-    password: 'admin123',
-    email: 'admin@cinemamax.com',
-    role: 'super_admin' as const,
-    permissions: ['users.read', 'users.write', 'users.delete', 'movies.read', 'movies.write', 'movies.delete', 'analytics.read', 'settings.write'],
-    avatar: 'https://ui-avatars.com/api/?name=Admin&background=FF6B6B&color=fff&size=150'
-  },
-  {
-    id: '2',
-    username: 'moderator',
-    password: 'mod123',
-    email: 'moderator@cinemamax.com',
-    role: 'admin' as const,
-    permissions: ['users.read', 'users.write', 'movies.read', 'movies.write', 'analytics.read'],
-    avatar: 'https://ui-avatars.com/api/?name=Moderator&background=3B82F6&color=fff&size=150'
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'
+
+// Permission mapping based on role
+const getPermissionsByRole = (role: string): string[] => {
+  if (role === 'admin') {
+    return [
+      'users.read', 'users.write', 'users.delete', 
+      'movies.read', 'movies.write', 'movies.delete', 
+      'analytics.read', 'settings.write'
+    ]
+  } else if (role === 'moderator') {
+    return [
+      'users.read', 'users.write', 
+      'movies.read', 'movies.write', 
+      'analytics.read'
+    ]
   }
-]
+  return []
+}
 
 export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<AdminUser | null>(null)
@@ -57,59 +58,114 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const router = useRouter()
 
   useEffect(() => {
-    const storedUser = localStorage.getItem('adminUser')
-    if (storedUser) {
-      try {
-        const userData = JSON.parse(storedUser)
-        setUser(userData)
-      } catch (error) {
-        console.error('Error parsing stored admin user:', error)
-        localStorage.removeItem('adminUser')
-      }
+    // Check if user is already logged in
+    const token = localStorage.getItem('adminToken')
+    if (token) {
+      verifyToken(token)
+    } else {
+      setIsLoading(false)
     }
-    setIsLoading(false)
   }, [])
 
-  const login = async (username: string, password: string) => {
+  const verifyToken = async (token: string) => {
     try {
-      const adminUser = DEMO_ADMIN_USERS.find(
-        u => u.username === username && u.password === password
-      )
+      const response = await fetch(`${API_BASE_URL}/api/auth/admin/verify`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      })
 
-      if (!adminUser) {
-        return { success: false, error: 'Invalid username or password' }
+      if (response.ok) {
+        const data = await response.json()
+        const userSession: AdminUser = {
+          ...data.user,
+          permissions: getPermissionsByRole(data.user.role),
+          avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(data.user.first_name + ' ' + data.user.last_name)}&background=FF6B6B&color=fff&size=150`,
+          lastLogin: new Date().toISOString()
+        }
+        setUser(userSession)
+        localStorage.setItem('adminUser', JSON.stringify(userSession))
+      } else {
+        // Token is invalid, remove it
+        localStorage.removeItem('adminToken')
+        localStorage.removeItem('adminUser')
       }
-
-      const userSession: AdminUser = {
-        id: adminUser.id,
-        username: adminUser.username,
-        email: adminUser.email,
-        role: adminUser.role,
-        permissions: adminUser.permissions,
-        avatar: adminUser.avatar,
-        lastLogin: new Date().toISOString()
-      }
-
-      setUser(userSession)
-      localStorage.setItem('adminUser', JSON.stringify(userSession))
-      
-      toast.success(`Welcome back, ${adminUser.username}!`)
-      return { success: true }
     } catch (error) {
-      return { success: false, error: 'Login failed. Please try again.' }
+      console.error('Token verification error:', error)
+      localStorage.removeItem('adminToken')
+      localStorage.removeItem('adminUser')
+    } finally {
+      setIsLoading(false)
     }
   }
 
-  const logout = () => {
-    setUser(null)
-    localStorage.removeItem('adminUser')
-    toast.success('Logged out successfully')
-    router.push('/login')
+  const login = async (username: string, password: string) => {
+    try {
+      setIsLoading(true)
+      
+      const response = await fetch(`${API_BASE_URL}/api/auth/admin/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ username, password })
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        const userSession: AdminUser = {
+          ...data.user,
+          permissions: getPermissionsByRole(data.user.role),
+          avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(data.user.first_name + ' ' + data.user.last_name)}&background=FF6B6B&color=fff&size=150`,
+          lastLogin: new Date().toISOString()
+        }
+
+        setUser(userSession)
+        localStorage.setItem('adminToken', data.token)
+        localStorage.setItem('adminUser', JSON.stringify(userSession))
+        
+        toast.success(`Welcome back, ${data.user.first_name}!`)
+        return { success: true }
+      } else {
+        return { success: false, error: data.error || 'Invalid credentials' }
+      }
+    } catch (error) {
+      console.error('Login error:', error)
+      return { success: false, error: 'Login failed. Please check your connection and try again.' }
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const logout = async () => {
+    try {
+      const token = localStorage.getItem('adminToken')
+      if (token) {
+        // Call logout endpoint to invalidate session
+        await fetch(`${API_BASE_URL}/api/auth/signout`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        })
+      }
+    } catch (error) {
+      console.error('Logout error:', error)
+    } finally {
+      setUser(null)
+      localStorage.removeItem('adminToken')
+      localStorage.removeItem('adminUser')
+      toast.success('Logged out successfully')
+      router.push('/login')
+    }
   }
 
   const hasPermission = (permission: string) => {
     if (!user) return false
-    return user.permissions.includes(permission) || user.role === 'super_admin'
+    return user.permissions.includes(permission) || user.role === 'admin'
   }
 
   return (

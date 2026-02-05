@@ -8,9 +8,11 @@
     "start": "node src/index.js",
     "build": "echo 'No build step required'",
     "test": "echo 'No tests specified'",
-    "db:generate": "supabase gen types typescript --project-id $PROJECT_ID --schema public > src/types/database.types.ts",
-    "db:reset": "supabase db reset",
-    "db:migrate": "supabase migration up",
+    "db:create": "node src/scripts/create-database.js",
+    "db:setup": "node src/scripts/setup-database.js",
+    "db:seed": "node src/scripts/seed-database.js",
+    "db:reset": "node src/scripts/reset-database.js",
+    "db:init": "npm run db:create && npm run db:setup && npm run db:seed",
     "deploy:railway": "railway deploy",
     "deploy:vercel": "vercel --prod",
     "deploy:heroku": "git push heroku main"
@@ -20,13 +22,18 @@
     "express": "^4.18.2",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
-    "axios": "^1.6.0"
+    "axios": "^1.6.0",
+    "pg": "^8.11.3",
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.2",
+    "express-rate-limit": "^7.1.5",
+    "helmet": "^7.1.0"
   },
   "devDependencies": {
     "nodemon": "^3.0.2",
     "supabase": "^1.142.2"
   },
-  "keywords": ["movie", "app", "backend", "supabase"],
+  "keywords": ["movie", "app", "backend", "postgresql"],
   "author": "CinemaMax Team",
   "license": "MIT"
 }

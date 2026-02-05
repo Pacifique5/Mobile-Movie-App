@@ -6,7 +6,9 @@ interface AdminUser {
   id: string
   username: string
   email: string
-  role: 'admin' | 'super_admin'
+  role: 'admin' | 'moderator'
+  first_name: string
+  last_name: string
   permissions: string[]
   avatar?: string
   lastLogin?: string
@@ -30,27 +32,25 @@ export const useAdminAuth = () => {
   return context
 }
 
-// Demo admin users
-const DEMO_ADMIN_USERS = [
-  {
-    id: '1',
-    username: 'admin',
-    password: 'admin123',
-    email: 'admin@cinemamax.com',
-    role: 'super_admin' as const,
-    permissions: ['users.read', 'users.write', 'users.delete', 'movies.read', 'movies.write', 'movies.delete', 'analytics.read', 'settings.write'],
-    avatar: 'https://ui-avatars.com/api/?name=Admin&background=FF6B6B&color=fff&size=150'
-  },
-  {
-    id: '2',
-    username: 'moderator',
-    password: 'mod123',
-    email: 'moderator@cinemamax.com',
-    role: 'admin' as const,
-    permissions: ['users.read', 'users.write', 'movies.read', 'movies.write', 'analytics.read'],
-    avatar: 'https://ui-avatars.com/api/?name=Moderator&background=3B82F6&color=fff&size=150'
+const API_BASE_URL = 'http://localhost:3000' // Update this for production
+
+// Permission mapping based on role
+const getPermissionsByRole = (role: string): string[] => {
+  if (role === 'admin') {
+    return [
+      'users.read', 'users.write', 'users.delete', 
+      'movies.read', 'movies.write', 'movies.delete', 
+      'analytics.read', 'settings.write'
+    ]
+  } else if (role === 'moderator') {
+    return [
+      'users.read', 'users.write', 
+      'movies.read', 'movies.write', 
+      'analytics.read'
+    ]
   }
-]
+  return []
+}
 
 export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<AdminUser | null>(null)
@@ -62,10 +62,9 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   const loadStoredUser = async () => {
     try {
-      const storedUser = await AsyncStorage.getItem('adminUser')
-      if (storedUser) {
-        const userData = JSON.parse(storedUser)
-        setUser(userData)
+      const token = await SecureStore.getItemAsync('adminToken')
+      if (token) {
+        await verifyToken(token)
       }
     } catch (error) {
       console.error('Error loading stored admin user:', error)
@@ -74,52 +73,100 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
   }
 
+  const verifyToken = async (token: string) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/auth/admin/verify`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        const userSession: AdminUser = {
+          ...data.user,
+          permissions: getPermissionsByRole(data.user.role),
+          avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(data.user.first_name + ' ' + data.user.last_name)}&background=FF6B6B&color=fff&size=150`,
+          lastLogin: new Date().toISOString()
+        }
+        setUser(userSession)
+        await AsyncStorage.setItem('adminUser', JSON.stringify(userSession))
+      } else {
+        // Token is invalid, remove it
+        await SecureStore.deleteItemAsync('adminToken')
+        await AsyncStorage.removeItem('adminUser')
+      }
+    } catch (error) {
+      console.error('Token verification error:', error)
+      await SecureStore.deleteItemAsync('adminToken')
+      await AsyncStorage.removeItem('adminUser')
+    }
+  }
+
   const login = async (username: string, password: string) => {
     try {
-      // In production, this would be an API call
-      const adminUser = DEMO_ADMIN_USERS.find(
-        u => u.username === username && u.password === password
-      )
-
-      if (!adminUser) {
-        return { success: false, error: 'Invalid username or password' }
-      }
-
-      const userSession: AdminUser = {
-        id: adminUser.id,
-        username: adminUser.username,
-        email: adminUser.email,
-        role: adminUser.role,
-        permissions: adminUser.permissions,
-        avatar: adminUser.avatar,
-        lastLogin: new Date().toISOString()
-      }
-
-      setUser(userSession)
-      await AsyncStorage.setItem('adminUser', JSON.stringify(userSession))
+      setIsLoading(true)
       
-      // Store sensitive data in secure store
-      await SecureStore.setItemAsync('adminToken', `token_${adminUser.id}`)
-      
-      return { success: true }
+      const response = await fetch(`${API_BASE_URL}/api/auth/admin/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ username, password })
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        const userSession: AdminUser = {
+          ...data.user,
+          permissions: getPermissionsByRole(data.user.role),
+          avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(data.user.first_name + ' ' + data.user.last_name)}&background=FF6B6B&color=fff&size=150`,
+          lastLogin: new Date().toISOString()
+        }
+
+        setUser(userSession)
+        await AsyncStorage.setItem('adminUser', JSON.stringify(userSession))
+        await SecureStore.setItemAsync('adminToken', data.token)
+        
+        return { success: true }
+      } else {
+        return { success: false, error: data.error || 'Invalid credentials' }
+      }
     } catch (error) {
-      return { success: false, error: 'Login failed. Please try again.' }
+      console.error('Login error:', error)
+      return { success: false, error: 'Login failed. Please check your connection and try again.' }
+    } finally {
+      setIsLoading(false)
     }
   }
 
   const logout = async () => {
     try {
+      const token = await SecureStore.getItemAsync('adminToken')
+      if (token) {
+        // Call logout endpoint to invalidate session
+        await fetch(`${API_BASE_URL}/api/auth/signout`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        })
+      }
+    } catch (error) {
+      console.error('Logout error:', error)
+    } finally {
       setUser(null)
       await AsyncStorage.removeItem('adminUser')
       await SecureStore.deleteItemAsync('adminToken')
-    } catch (error) {
-      console.error('Error during logout:', error)
     }
   }
 
   const hasPermission = (permission: string) => {
     if (!user) return false
-    return user.permissions.includes(permission) || user.role === 'super_admin'
+    return user.permissions.includes(permission) || user.role === 'admin'
   }
 
   return (

@@ -82,18 +82,18 @@ function StatCard({ title, value, change, icon: Icon, color, trend }: StatCardPr
 export default function Dashboard() {
   const { user } = useAdminAuth()
   const [stats, setStats] = useState({
-    total_users: 1247,
-    active_users: 892,
-    total_movies: 856,
-    total_favorites: 3421,
-    total_reviews: 892,
-    new_users_today: 23,
-    new_users_this_week: 156,
-    new_users_this_month: 634,
-    revenue_today: 3650,
-    revenue_month: 89420,
-    premium_users: 180,
-    server_uptime: 99.8
+    total_users: 0,
+    active_users: 0,
+    total_movies: 0,
+    total_favorites: 0,
+    total_reviews: 0,
+    new_users_today: 0,
+    new_users_this_week: 0,
+    new_users_this_month: 0,
+    revenue_today: 0,
+    revenue_month: 0,
+    premium_users: 0,
+    server_uptime: 0
   })
   
   const [activity, setActivity] = useState<RecentActivity[]>([])
@@ -101,89 +101,113 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Simulate real-time data updates
+    fetchDashboardData()
+    
+    // Set up real-time updates every 30 seconds
     const interval = setInterval(() => {
-      setStats(prev => ({
-        ...prev,
-        active_users: prev.active_users + Math.floor(Math.random() * 5) - 2,
-        new_users_today: prev.new_users_today + (Math.random() > 0.8 ? 1 : 0),
-        revenue_today: prev.revenue_today + Math.floor(Math.random() * 100)
-      }))
-    }, 5000)
-
-    // Load initial data
-    setTimeout(() => {
-      setActivity([
-        {
-          id: '1',
-          user_id: '1',
-          user_name: 'John Doe',
-          user_email: 'john@example.com',
-          activity_type: 'subscription',
-          created_at: new Date().toISOString(),
-          details: 'Upgraded to Premium'
-        },
-        {
-          id: '2',
-          user_id: '2',
-          user_name: 'Jane Smith',
-          user_email: 'jane@example.com',
-          activity_type: 'favorite',
-          movie_id: '550',
-          movie_title: 'Fight Club',
-          created_at: new Date(Date.now() - 15 * 60 * 1000).toISOString()
-        },
-        {
-          id: '3',
-          user_id: '3',
-          user_name: 'Mike Johnson',
-          user_email: 'mike@example.com',
-          activity_type: 'review',
-          movie_id: '155',
-          movie_title: 'The Dark Knight',
-          created_at: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
-          details: 'Rated 5 stars'
-        },
-        {
-          id: '4',
-          user_id: '4',
-          user_name: 'Sarah Wilson',
-          user_email: 'sarah@example.com',
-          activity_type: 'signup',
-          created_at: new Date(Date.now() - 45 * 60 * 1000).toISOString()
-        },
-        {
-          id: '5',
-          user_id: '5',
-          user_name: 'Alex Brown',
-          user_email: 'alex@example.com',
-          activity_type: 'view',
-          movie_id: '278',
-          movie_title: 'The Shawshank Redemption',
-          created_at: new Date(Date.now() - 60 * 60 * 1000).toISOString()
-        }
-      ])
-
-      setAlerts([
-        {
-          id: '1',
-          type: 'warning',
-          message: 'Server CPU usage is at 85%. Consider scaling up.',
-          timestamp: new Date(Date.now() - 10 * 60 * 1000).toISOString()
-        },
-        {
-          id: '2',
-          type: 'info',
-          message: 'New movie "Dune: Part Two" has been added to the catalog.',
-          timestamp: new Date(Date.now() - 30 * 60 * 1000).toISOString()
-        }
-      ])
-
-      setLoading(false)
-    }, 1000)
+      fetchDashboardData()
+    }, 30000)
 
     return () => clearInterval(interval)
   }, [])
+
+  const fetchDashboardData = async () => {
+    try {
+      const token = localStorage.getItem('adminToken')
+      if (!token) return
+
+      // Fetch system statistics
+      const statsResponse = await fetch('http://localhost:3000/api/admin/stats', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      })
+
+      if (statsResponse.ok) {
+        const statsData = await statsResponse.json()
+        setStats(prev => ({
+          ...prev,
+          ...statsData,
+          // Add some calculated fields for demo
+          active_users: Math.floor(statsData.total_users * 0.7), // 70% active rate
+          revenue_today: 3650 + Math.floor(Math.random() * 500),
+          revenue_month: 89420 + Math.floor(Math.random() * 5000),
+          premium_users: Math.floor(statsData.total_users * 0.15), // 15% premium rate
+          server_uptime: 99.8
+        }))
+      }
+
+      // Fetch recent activity
+      const activityResponse = await fetch('http://localhost:3000/api/admin/activity?limit=10', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      })
+
+      if (activityResponse.ok) {
+        const activityData = await activityResponse.json()
+        setActivity(activityData)
+      }
+
+      // Fetch system health for alerts
+      const healthResponse = await fetch('http://localhost:3000/api/admin/health', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      })
+
+      if (healthResponse.ok) {
+        const healthData = await healthResponse.json()
+        
+        // Generate alerts based on system health
+        const newAlerts: SystemAlert[] = []
+        
+        if (healthData.services.database !== 'healthy') {
+          newAlerts.push({
+            id: 'db-alert',
+            type: 'error',
+            message: 'Database connection issues detected. Please check system status.',
+            timestamp: new Date().toISOString()
+          })
+        }
+
+        // Add some demo alerts for better UX
+        if (Math.random() > 0.7) {
+          newAlerts.push({
+            id: 'cpu-alert',
+            type: 'warning',
+            message: 'Server CPU usage is elevated. Monitoring performance.',
+            timestamp: new Date(Date.now() - 10 * 60 * 1000).toISOString()
+          })
+        }
+
+        setAlerts(newAlerts)
+      }
+
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error)
+      // Set fallback demo data on error
+      setStats({
+        total_users: 0,
+        active_users: 0,
+        total_movies: 0,
+        total_favorites: 0,
+        total_reviews: 0,
+        new_users_today: 0,
+        new_users_this_week: 0,
+        new_users_this_month: 0,
+        revenue_today: 0,
+        revenue_month: 0,
+        premium_users: 0,
+        server_uptime: 0
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const getActivityIcon = (type: string) => {
     switch (type) {

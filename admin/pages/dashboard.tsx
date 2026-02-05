@@ -10,7 +10,6 @@ import {
   ChartBarIcon,
   ClockIcon,
   ExclamationTriangleIcon,
-  DocumentTextIcon,
   PlayIcon
 } from '@heroicons/react/24/outline'
 import { useAdminAuth } from '@/contexts/AdminAuthContext'
@@ -231,12 +230,9 @@ export default function Dashboard() {
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div className="flex justify-between items-center">
+      <div>
         <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-        <button className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors">
-          <DocumentTextIcon className="h-5 w-5" />
-          <span>Generate Report</span>
-        </button>
+        <p className="text-sm text-gray-500 mt-1">Welcome to CinemaMax Admin Panel</p>
       </div>
 
       {/* Main Stats Grid - CinemaMax Specific */}

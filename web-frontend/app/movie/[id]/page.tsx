@@ -84,7 +84,7 @@ export default function MovieDetailPage() {
   const checkFavoriteStatus = async () => {
     try {
       const token = localStorage.getItem('token')
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/favorites`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/favorites`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -106,13 +106,12 @@ export default function MovieDetailPage() {
 
     try {
       const token = localStorage.getItem('token')
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/favorites`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/favorites/${params.id}`, {
         method: isFavorite ? 'DELETE' : 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ movie_id: params.id })
+        }
       })
 
       if (response.ok) {

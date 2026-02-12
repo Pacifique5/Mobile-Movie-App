@@ -36,7 +36,7 @@ export default function FavoritesPage() {
   const fetchFavorites = async () => {
     try {
       const token = localStorage.getItem('token')
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/favorites`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/favorites`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -66,13 +66,12 @@ export default function FavoritesPage() {
   const removeFavorite = async (movieId: string) => {
     try {
       const token = localStorage.getItem('token')
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/favorites`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/favorites/${movieId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ movie_id: movieId })
+        }
       })
 
       if (response.ok) {

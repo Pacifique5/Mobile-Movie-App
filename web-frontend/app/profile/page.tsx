@@ -52,7 +52,7 @@ export default function ProfilePage() {
   const fetchStats = async () => {
     try {
       const token = localStorage.getItem('token')
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/favorites`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/favorites`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }

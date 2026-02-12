@@ -61,11 +61,12 @@ export default function SearchPage() {
   const fetchFavorites = async () => {
     try {
       const token = localStorage.getItem('token')
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/favorites`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/favorites`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       })
+
       if (response.ok) {
         const data = await response.json()
         const favoriteIds = new Set(data.map((fav: any) => fav.movie_id))
@@ -111,13 +112,12 @@ export default function SearchPage() {
 
     try {
       const token = localStorage.getItem('token')
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/favorites`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/favorites/${movieId}`, {
         method: isFavorite ? 'DELETE' : 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ movie_id: movieId })
+        }
       })
 
       if (response.ok) {

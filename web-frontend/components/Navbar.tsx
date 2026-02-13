@@ -10,44 +10,11 @@ import {
   HomeIcon,
   HeartIcon
 } from '@heroicons/react/24/outline'
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 
 export default function Navbar() {
   const { user, isGuest, logout } = useAuth()
   const [showDropdown, setShowDropdown] = useState(false)
-  const [profileImage, setProfileImage] = useState<string | null>(null)
-
-  useEffect(() => {
-    if (user && !isGuest) {
-      fetchProfileImage()
-    }
-  }, [user, isGuest])
-
-  const fetchProfileImage = async () => {
-    try {
-      const token = localStorage.getItem('token')
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/profile`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      })
-      if (response.ok) {
-        const data = await response.json()
-        if (data.profile_image) {
-          setProfileImage(data.profile_image)
-        }
-      }
-    } catch (error) {
-      console.error('Error fetching profile image:', error)
-    }
-  }
-
-  const getInitials = () => {
-    if (!user) return '?'
-    const firstInitial = user.first_name?.[0] || ''
-    const lastInitial = user.last_name?.[0] || ''
-    return (firstInitial + lastInitial).toUpperCase() || user.username?.[0]?.toUpperCase() || '?'
-  }
 
   return (
     <nav className="bg-gray-900 border-b border-gray-800 sticky top-0 z-50">
@@ -89,18 +56,8 @@ export default function Navbar() {
                   onClick={() => setShowDropdown(!showDropdown)}
                   className="flex items-center space-x-2 text-white hover:opacity-80 transition-opacity"
                 >
-                  <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-800 border-2 border-red-500 flex items-center justify-center">
-                    {profileImage ? (
-                      <img
-                        src={profileImage}
-                        alt="Profile"
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <span className="text-white font-bold text-sm">
-                        {getInitials()}
-                      </span>
-                    )}
+                  <div className="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center border-2 border-gray-600">
+                    <UserCircleIcon className="h-7 w-7 text-gray-400" />
                   </div>
                   <span className="hidden md:block font-semibold">{user.first_name}</span>
                 </button>

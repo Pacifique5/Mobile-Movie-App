@@ -41,7 +41,7 @@ const verifyUser = async (req, res, next) => {
 router.get('/profile', verifyUser, async (req, res) => {
   try {
     const result = await query(
-      'SELECT id, username, email, first_name, last_name, role, profile_image, created_at FROM users WHERE id = $1',
+      'SELECT id, username, email, first_name, last_name, role, created_at FROM users WHERE id = $1',
       [req.user.id]
     );
 
@@ -59,7 +59,7 @@ router.get('/profile', verifyUser, async (req, res) => {
 // Update user profile
 router.put('/profile', verifyUser, async (req, res) => {
   try {
-    const { first_name, last_name, email, profile_image } = req.body;
+    const { first_name, last_name, email } = req.body;
     
     const updates = [];
     const values = [];
@@ -77,10 +77,6 @@ router.put('/profile', verifyUser, async (req, res) => {
       updates.push(`email = $${paramCount++}`);
       values.push(email);
     }
-    if (profile_image !== undefined) {
-      updates.push(`profile_image = $${paramCount++}`);
-      values.push(profile_image);
-    }
 
     if (updates.length === 0) {
       return res.status(400).json({ error: 'No valid fields to update' });
@@ -94,7 +90,7 @@ router.put('/profile', verifyUser, async (req, res) => {
       UPDATE users 
       SET ${updates.join(', ')}
       WHERE id = $${paramCount}
-      RETURNING id, username, email, first_name, last_name, role, profile_image, updated_at
+      RETURNING id, username, email, first_name, last_name, role, updated_at
     `, values);
 
     res.json(result.rows[0]);

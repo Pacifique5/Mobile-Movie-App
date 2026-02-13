@@ -11,6 +11,7 @@ interface User {
   first_name: string
   last_name: string
   role: string
+  created_at?: string
 }
 
 interface AuthContextType {
@@ -157,6 +158,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     toast.success('Browsing as guest')
     router.push('/home')
   }
+
+
 
   return (
     <AuthContext.Provider value={{ user, isGuest, loading, login, signup, logout, continueAsGuest }}>

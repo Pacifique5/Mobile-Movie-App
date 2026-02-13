@@ -11,6 +11,7 @@ interface User {
   first_name: string
   last_name: string
   role: string
+  profile_image?: string
   created_at?: string
 }
 
@@ -22,6 +23,7 @@ interface AuthContextType {
   signup: (username: string, email: string, password: string, firstName: string, lastName: string) => Promise<void>
   logout: () => void
   continueAsGuest: () => void
+  refreshUser: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -159,10 +161,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     router.push('/home')
   }
 
+  const refreshUser = async () => {
+    try {
+      const token = localStorage.getItem('token')
+      if (token) {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/user`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        })
+        if (response.ok) {
+          const data = await response.json()
+          console.log('Refreshed user data:', data.user)
+          setUser(data.user)
+        }
+      }
+    } catch (error) {
+      console.error('Refresh user error:', error)
+    }
+  }
+
 
 
   return (
-    <AuthContext.Provider value={{ user, isGuest, loading, login, signup, logout, continueAsGuest }}>
+    <AuthContext.Provider value={{ user, isGuest, loading, login, signup, logout, continueAsGuest, refreshUser }}>
       {children}
     </AuthContext.Provider>
   )

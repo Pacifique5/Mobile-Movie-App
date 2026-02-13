@@ -65,7 +65,7 @@ router.post('/signup', async (req, res) => {
     const result = await query(`
       INSERT INTO users (username, email, password_hash, first_name, last_name, role)
       VALUES ($1, $2, $3, $4, $5, $6)
-      RETURNING id, username, email, first_name, last_name, role, created_at
+      RETURNING id, username, email, first_name, last_name, role, profile_image, created_at
     `, [username, email, passwordHash, firstName, lastName, 'user']);
 
     const user = result.rows[0];
@@ -82,6 +82,7 @@ router.post('/signup', async (req, res) => {
         first_name: user.first_name,
         last_name: user.last_name,
         role: user.role,
+        profile_image: user.profile_image,
         created_at: user.created_at
       },
       token
@@ -136,6 +137,7 @@ router.post('/signin', async (req, res) => {
         first_name: user.first_name,
         last_name: user.last_name,
         role: user.role,
+        profile_image: user.profile_image,
         created_at: user.created_at
       },
       token
@@ -240,7 +242,7 @@ router.get('/user', async (req, res) => {
       
       // Get fresh user data
       const result = await query(
-        'SELECT id, username, email, first_name, last_name, role, is_active, created_at FROM users WHERE id = $1',
+        'SELECT id, username, email, first_name, last_name, role, is_active, profile_image, created_at FROM users WHERE id = $1',
         [decoded.id]
       );
 

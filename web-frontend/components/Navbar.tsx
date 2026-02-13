@@ -8,13 +8,72 @@ import {
   UserCircleIcon,
   ArrowLeftOnRectangleIcon,
   HomeIcon,
-  HeartIcon
+  HeartIcon,
+  CameraIcon
 } from '@heroicons/react/24/outline'
 import { useState } from 'react'
+import toast from 'react-hot-toast'
 
 export default function Navbar() {
-  const { user, isGuest, logout } = useAuth()
+  const { user, isGuest, logout, refreshUser } = useAuth()
   const [showDropdown, setShowDropdown] = useState(false)
+  const [isUploadingImage, setIsUploadingImage] = useState(false)
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    if (!['image/jpeg', 'image/png', 'image/gif'].includes(file.type)) {
+      toast.error('Please upload a JPG, PNG, or GIF image')
+      return
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Image size must be less than 5MB')
+      return
+    }
+
+    setIsUploadingImage(true)
+
+    try {
+      const reader = new FileReader()
+      reader.onloadend = async () => {
+        const base64String = reader.result as string
+
+        const token = localStorage.getItem('token')
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/profile`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ profile_image: base64String })
+        })
+
+        if (response.ok) {
+          const data = await response.json()
+          console.log('Profile updated:', data)
+          await refreshUser()
+          toast.success('Profile picture updated!')
+          setShowDropdown(false)
+        } else {
+          const data = await response.json()
+          console.error('Upload failed:', data)
+          toast.error(data.error || 'Failed to update profile picture')
+        }
+        setIsUploadingImage(false)
+      }
+      reader.onerror = () => {
+        toast.error('Failed to read image file')
+        setIsUploadingImage(false)
+      }
+      reader.readAsDataURL(file)
+    } catch (error) {
+      console.error('Image upload error:', error)
+      toast.error('Failed to upload image')
+      setIsUploadingImage(false)
+    }
+  }
 
   return (
     <nav className="bg-gray-900 border-b border-gray-800 sticky top-0 z-50">
@@ -56,8 +115,16 @@ export default function Navbar() {
                   onClick={() => setShowDropdown(!showDropdown)}
                   className="flex items-center space-x-2 text-white hover:opacity-80 transition-opacity"
                 >
-                  <div className="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center border-2 border-gray-600">
-                    <UserCircleIcon className="h-7 w-7 text-gray-400" />
+                  <div className="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center border-2 border-gray-600 overflow-hidden">
+                    {user.profile_image ? (
+                      <img
+                        src={user.profile_image}
+                        alt={user.first_name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <UserCircleIcon className="h-7 w-7 text-gray-400" />
+                    )}
                   </div>
                   <span className="hidden md:block font-semibold">{user.first_name}</span>
                 </button>
@@ -68,14 +135,30 @@ export default function Navbar() {
                       <p className="text-white font-semibold">{user.first_name} {user.last_name}</p>
                       <p className="text-gray-400 text-sm">@{user.username}</p>
                     </div>
-                    <Link
-                      href="/profile"
-                      className="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white transition-colors"
-                      onClick={() => setShowDropdown(false)}
+                    <label
+                      htmlFor="navbar-profile-upload"
+                      className="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-700 hover:text-white transition-colors cursor-pointer"
                     >
-                      <UserCircleIcon className="h-5 w-5 mr-3" />
-                      <span>Profile</span>
-                    </Link>
+                      {isUploadingImage ? (
+                        <>
+                          <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white mr-3"></div>
+                          <span>Uploading...</span>
+                        </>
+                      ) : (
+                        <>
+                          <CameraIcon className="h-5 w-5 mr-3" />
+                          <span>Upload Photo</span>
+                        </>
+                      )}
+                    </label>
+                    <input
+                      id="navbar-profile-upload"
+                      type="file"
+                      accept="image/jpeg,image/png,image/gif"
+                      onChange={handleImageUpload}
+                      className="hidden"
+                      disabled={isUploadingImage}
+                    />
                     <hr className="border-gray-700 my-2" />
                     <button
                       onClick={() => {
